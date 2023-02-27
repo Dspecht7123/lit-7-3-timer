@@ -41,7 +41,9 @@
   "author": "Google LLC",
   "license": "BSD-3-Clause",
   "dependencies": {
-    "lit": "^2.2.4"
+    "@types/dom-screen-wake-lock": "^1.0.0",
+    "lit": "^2.2.4",
+    "nosleep.js": "^0.12.0"
   },
   "devDependencies": {
     "@11ty/eleventy": "^1.0.1",

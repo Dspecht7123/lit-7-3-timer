@@ -59,7 +59,8 @@ export class MyElement extends LitElement {
   intervalState: string = 'start';
   intervalRunning: boolean = false;
   backgroundColor: string = 'green';
-  beepAudio: HTMLAudioElement;
+  beepLowAudio: HTMLAudioElement;
+  beepHighAudio: HTMLAudioElement;
 
   @property()
   secondsPassed: number = 3;
@@ -160,7 +161,9 @@ export class MyElement extends LitElement {
     this.intervals = 6;
     this.setBreakSec = 120;
     this.sets = 10;
-    this.beepAudio = new Audio('./beep.mp3');
+    this.beepLowAudio = new Audio('./beep_low.mp3');
+    this.beepHighAudio = new Audio('./beep_high.mp3')
+
   }
 
   private onChangeWorkoutSec(e: any) {
@@ -217,68 +220,86 @@ export class MyElement extends LitElement {
     this.intervalState = 'start';
   }
 
-  private beep(): void {
-    this.beepAudio.play();
+  private beepLow(): void {
+    this.beepLowAudio.play();
+  }
+
+  private beepHigh(): void {
+    this.beepHighAudio.play();
+  }
+
+  private handleStartState() {
+    this.secondsPassed = this.workoutSec;
+    this.intervalState = 'workout';
+    this.backgroundColor = 'red';
+    console.log('workout starts');
+    this.message = 'workout';
+    this.beepHigh();
+  }
+
+  private handleWorkoutState() {
+    this.secondsPassed = this.breakSec;
+    this.intervalState = 'workoutBreak';
+    this.backgroundColor = 'green';
+    console.log("workout break starts");
+    this.beepHigh();
+    this.message = 'break';
+  }
+
+  private handleWorkoutBreak() {
+    this.workoutCounter++;
+    if (this.workoutCounter === this.intervals) {
+      this.secondsPassed = this.setBreakSec;
+      this.workoutCounter = 0;
+      this.intervalState = 'setBreak';
+      this.backgroundColor = 'green';
+      console.log("set break starts");
+      this.message = 'set break';
+      this.beepHigh();
+    } else {
+      this.secondsPassed = this.workoutSec;
+      this.intervalState = 'workout';
+      this.backgroundColor = 'red';
+      console.log("workout starts");
+      this.message = 'workout';
+      this.beepHigh();
+    }
+  }
+
+  private handleSetBreakState() {
+    this.setCounter++;
+    if (this.setCounter === this.sets) {
+      console.log('finished');
+      window.clearInterval(this.intervalId);
+      this.intervalId = 0;
+      this.message = 'finished';
+      this.backgroundColor = 'green';
+    } else {
+      this.secondsPassed = this.workoutSec;
+      this.intervalState = 'workout';
+      this.backgroundColor = 'red';
+      console.log('set break finished');
+      this.beepHigh();
+      this.message = 'workout';
+    }
   }
 
   private intervalController(): void {
     if (this.intervalRunning) {
       this.secondsPassed--;
       console.log(this.secondsPassed.toString());
-      if (this.intervalState === 'start' && this.secondsPassed === 0) {
-        this.secondsPassed = this.workoutSec;
-        this.intervalState = 'workout';
-        this.backgroundColor = 'red';
-        console.log('workout starts');
-        this.message = 'workout';
-        this.beep();
-      } else if (this.intervalState === 'workout') {
-        if (this.secondsPassed === 0) {
-          this.secondsPassed = this.breakSec;
-          this.intervalState = 'workoutBreak';
-          this.backgroundColor = 'green';
-          console.log("workout break starts");
-          this.beep();
-          this.message = 'break';
+      if (this.secondsPassed === 0) {
+        if (this.intervalState === 'start') {
+          this.handleStartState();
+        } else if (this.intervalState === 'workout') {
+          this.handleWorkoutState();
+        } else if (this.intervalState === 'workoutBreak') {
+          this.handleWorkoutBreak();
+        } else if (this.intervalState === 'setBreak') {
+          this.handleSetBreakState();
         }
-      } else if (this.intervalState === 'workoutBreak') {
-        if (this.secondsPassed === 0) {
-          this.workoutCounter++;
-          if (this.workoutCounter === this.intervals) {
-            this.secondsPassed = this.setBreakSec;
-            this.workoutCounter = 0;
-            this.intervalState = 'setBreak';
-            this.backgroundColor = 'green';
-            console.log("set break starts");
-            this.message = 'set break';
-            this.beep();
-          } else {
-            this.secondsPassed = this.workoutSec;
-            this.intervalState = 'workout';
-            this.backgroundColor = 'red';
-            console.log("workout starts");
-            this.message = 'workout';
-            this.beep();
-          }
-        }
-      } else if (this.intervalState === 'setBreak') {
-        if (this.secondsPassed === 0) {
-          this.setCounter++;
-          if (this.setCounter === this.sets) {
-            console.log('finished');
-            window.clearInterval(this.intervalId);
-            this.intervalId = 0;
-            this.message = 'finished';
-            this.backgroundColor = 'green';
-          } else {
-            this.secondsPassed = this.workoutSec;
-            this.intervalState = 'workout';
-            this.backgroundColor = 'red';
-            console.log('set break finished');
-            this.beep();
-            this.message = 'workout';
-          }
-        }
+      } else if (this.secondsPassed <= 2) {
+        this.beepLow();
       }
     }
   }
